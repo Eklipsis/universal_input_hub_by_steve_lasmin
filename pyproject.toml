@@ -1,0 +1,14 @@
+[project]
+name = "universal_input_hub_by_steve_lasmin"
+description = "All-in-one ComfyUI workflow hub with three prompt modes: direct, LLM-enhanced, and image-to-prompt via vision models"
+version = "1.0.2"
+license = { file = "LICENSE" }
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/Eklipsis/universal_input_hub_by_steve_lasmin"
+
+[tool.comfy]
+PublisherId = "stevelasmin4real"
+DisplayName = "Universal Input Hub by Steve Lasmin"
+Icon = ""
