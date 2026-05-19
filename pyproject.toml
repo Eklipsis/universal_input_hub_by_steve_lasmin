@@ -1,6 +1,6 @@
 [project]
 name = "universal_input_hub_by_steve_lasmin"
-description = "All-in-one ComfyUI workflow hub with three prompt modes: direct, LLM-enhanced, and image-to-prompt via vision models"
+description = "All-in-one ComfyUI workflow input hub intended mainly for image generation scenarios"
 version = "1.0.2"
 license = { file = "LICENSE" }
 dependencies = []
