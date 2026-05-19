@@ -1,40 +1,85 @@
 # Universal Input Hub by Steve Lasmin
 
-An all-in-one ComfyUI workflow node that calculates image dimensions from aspect ratio **and** generates noise, sigmas, conditioning, and sampler objects — replacing multiple standard nodes with a single powerful hub.
+An all-in-one ComfyUI workflow node that replaces multiple standard nodes with a single powerful hub. Calculates image dimensions, generates noise, computes sigmas (standard and Flux-optimized), encodes conditioning, and provides sampler objects — all in one place.
 
 **Author:** Steve Lasmin  
 **Support:** https://boosty.to/stevelasmin
 
-## Features
+---
 
-### Resolution & Aspect Ratio
-- Set a **maximum dimension** (`max_size`) — the longest side of the output image
-- Choose from **11 aspect ratio presets** (1:1, 3:2, 4:3, 16:9, 16:10, 21:9, 2:3, 3:4, 9:16, 9:21) or define a **custom ratio**
-- Choose a **multiplier** (16, 32, 64) to ensure dimensions are divisible by VAE/UNet block sizes
-- Outputs `width` and `height` as integers
+## What It Does
+
+Instead of wiring together **Empty Latent Image**, **CLIP Text Encode**, **KSampler selector**, **noise generator**, and **sigma scheduler** nodes, this single node handles everything.
+
+---
+
+## Inputs (15)
+
+### Resolution & Aspect
+| Input | Type | Default | Range | Description |
+|-------|------|---------|-------|-------------|
+| `max_size` | INT | 1024 | 32–4096 (step 32) | Longest side of the output image in pixels |
+| `aspect_ratio` | preset | custom | 11 presets + custom | Choose 1:1, 3:2, 4:3, 16:9, 16:10, 21:9, 2:3, 3:4, 9:16, 9:21, or custom |
+| `width_ratio` | INT | 2 | 1–999999 | Custom width component (only when aspect_ratio = custom) |
+| `height_ratio` | INT | 3 | 1–999999 | Custom height component (only when aspect_ratio = custom) |
+| `multiplier` | dropdown | 32 | 16 / 32 / 64 | Ensures output dimensions are divisible by this value |
 
 ### Generation Parameters
-- **Seed** input with default `777`
-- **Steps** (1–10000)
-- **CFG** scale with fine 0.1 stepping
-- **Sampler** dropdown (pulled from ComfyUI's native sampler list)
-- **Scheduler** dropdown (pulled from ComfyUI's native scheduler list)
+| Input | Type | Default | Range | Description |
+|-------|------|---------|-------|-------------|
+| `seed` | INT | 777 | 0–max uint64 | Random seed for noise generation |
+| `steps` | INT | 20 | 1–10000 | Number of sampling steps |
+| `cfg` | FLOAT | 4.0 | 0.0–100.0 (step 0.1) | Classifier-Free Guidance scale |
+| `sampler` | dropdown | euler | All ComfyUI samplers | Sampling algorithm (euler, dpmpp_2m, etc.) |
+| `scheduler` | dropdown | normal | All ComfyUI schedulers | Noise schedule (normal, simple, karras, etc.) |
 
-### Model & Conditioning
-- Accepts `MODEL` and `CLIP` inputs
-- **Positive prompt** with optional **trigger words** (auto-prepended with `". "`)
-- **Negative prompt**
-- Outputs `positive` and `negative` **CONDITIONING** tensors
-- Outputs `noise` as a proper **NOISE** object for `SamplerCustomAdvanced`
+### Model & Prompts
+| Input | Type | Description |
+|-------|------|-------------|
+| `model` | MODEL | Diffusion model input |
+| `clip` | CLIP | CLIP text encoder input |
+| `prompt` | STRING (multiline) | Main positive text prompt |
+| `trigger_words` | STRING | Words auto-prepended to prompt with ". " separator |
+| `negative_prompt` | STRING (multiline) | Text to exclude from generation |
 
-### Sigmas
-- **Standard sigmas** calculated from model + scheduler + steps
-- **Flux sigmas** computed dimension-aware using Flux-2 time-SNR shift (no model required)
+---
 
-### Utility Outputs
-- `preview` — human-readable summary of all settings
-- `help` — full in-node documentation text
-- Passthroughs: `model`, `steps`, `cfg`, `sampler_name`, `sampler`, `scheduler_name`, `prompt`, `prompt_with_triggers`, `negative_prompt`
+## Outputs (19)
+
+| Output | Type | Description |
+|--------|------|-------------|
+| `width` | INT | Calculated image width in pixels |
+| `height` | INT | Calculated image height in pixels |
+| `preview` | STRING | Human-readable summary of all settings |
+| `seed` | INT | Seed value passthrough |
+| `noise` | NOISE | Noise object for SamplerCustomAdvanced |
+| `steps` | INT | Steps passthrough |
+| `cfg` | FLOAT | CFG passthrough |
+| `sampler_name` | STRING | Sampler name as string |
+| `sampler` | SAMPLER | Sampler object for advanced samplers |
+| `scheduler_name` | STRING | Scheduler name as string |
+| `sigmas` | SIGMAS | Standard sigmas from model + scheduler + steps |
+| `flux_sigmas` | SIGMAS | Flux-2 optimized sigmas (dimension-aware, no model needed) |
+| `model` | MODEL | Model passthrough |
+| `prompt` | STRING | Original prompt text |
+| `prompt_with_triggers` | STRING | Prompt with trigger words prepended |
+| `negative_prompt` | STRING | Negative prompt text |
+| `positive` | CONDITIONING | Positive conditioning tensor |
+| `negative` | CONDITIONING | Negative conditioning tensor |
+| `help` | STRING | Full in-node documentation |
+
+---
+
+## Key Features
+
+- **19 outputs** — everything a sampler needs in one node
+- **Flux-2 sigma schedule** — computed from actual output dimensions using time-SNR shift
+- **Trigger words** — automatically prepended with proper ". " separator
+- **Tooltips on every input** — hover for guidance
+- **Clean docstring** — no garbled mixed text
+- **Consistent rounding** — width/height calculated once and reused throughout
+
+---
 
 ## Installation
 
@@ -45,18 +90,18 @@ An all-in-one ComfyUI workflow node that calculates image dimensions from aspect
    ```
 3. Restart ComfyUI
 
-## Usage
-
 The node appears under **utils → Universal Input Hub by Steve Lasmin**.
 
-Connect your `MODEL` and `CLIP` inputs, type your prompt, choose an aspect ratio, and the node outputs everything needed to feed directly into a sampler.
+---
 
-### Example Workflow
+## Example Workflow
 
 1. Load Checkpoint → connect `MODEL` and `CLIP` to this node
 2. Set `max_size` to `1024`, `aspect_ratio` to `16:9`, `multiplier` to `32`
 3. Type your `prompt` and optional `trigger_words`
 4. Connect outputs to `SamplerCustomAdvanced` or standard KSampler
+
+---
 
 ## File Structure
 
@@ -70,6 +115,8 @@ universal_input_hub_by_steve_lasmin/
 └── pyproject.toml
 ```
 
+---
+
 ## License
 
 This project is licensed under the **Creative Commons Attribution-NoDerivatives 4.0 International License**.
@@ -81,6 +128,8 @@ This project is licensed under the **Creative Commons Attribution-NoDerivatives 
 See [LICENSE](LICENSE) for full terms.
 
 To request permission for modifications, contact: **real.eclipse@gmail.com**
+
+---
 
 ## Support
 
